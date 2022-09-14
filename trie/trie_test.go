@@ -1,6 +1,10 @@
 package trie
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -95,4 +99,39 @@ func TestNewByteTrie(t *testing.T) {
 
 		trie.Walk([]byte{}, actor)
 	*/
+}
+
+func printMemoryUsage(t *testing.T, m1, m2 *runtime.MemStats) {
+	t.Log(
+		"Alloc:", (m2.Alloc-m1.Alloc)/1000000,
+		"TotalAlloc:", (m2.TotalAlloc-m1.TotalAlloc)/1000000,
+		"HeapAlloc:", (m2.HeapAlloc-m1.HeapAlloc)/1000000,
+	)
+}
+
+func getMD5Hash(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func TestTrieMemorySize(t *testing.T) {
+	var m1, m2 runtime.MemStats
+	runtime.GC()
+	runtime.ReadMemStats(&m1)
+	//	byteTrie := NewTrie[byte]()
+	myMap := make(map[string]int)
+	for i := 0; i < 10,000,000; i++ {
+		//	byteTrie.Put([]byte(getMD5Hash(fmt.Sprintf("dc%de9-2fda-%d-bd2c-%da8284b9c4%d", i, i, i, i))), i)
+		myMap[getMD5Hash(fmt.Sprintf("dc%de9-2fda-%d-bd2c-%da8284b9c4%d", i, i, i, i))] = i
+	}
+
+	runtime.ReadMemStats(&m2)
+	printMemoryUsage(t, &m1, &m2)
+
+	for i := 0; i < 1000000; i++ {
+		if val, foud := myMap[getMD5Hash(fmt.Sprintf("dc%de9-2fda-%d-bd2c-%da8284b9c4%d", i, i, i, i))]; !foud || i != val {
+			t.Fatalf("Invalid Value")
+		}
+	}
 }
